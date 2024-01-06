@@ -1,7 +1,11 @@
 package com.videostream.authenticationservice.Auth;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.videostream.authenticationservice.JWT.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,8 +30,11 @@ public class AuthController {
         //todo return new refresh token and access token
         return null;
     }
-    @GetMapping("/pubkey")
-    public ResponseEntity<?> getPublicKey(){
-        return ResponseEntity.ok(jwtService.getRSA_PublicKey());
+    @GetMapping(value = "/pubkey",produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getPublicKey() throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode root = mapper.createObjectNode();
+        root.put("Key",jwtService.getRSA_PublicKey());
+        return ResponseEntity.ok(mapper.writer().writeValueAsString(root));
     }
 }
