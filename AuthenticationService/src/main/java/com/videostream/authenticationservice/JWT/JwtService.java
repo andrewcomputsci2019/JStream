@@ -1,11 +1,18 @@
 package com.videostream.authenticationservice.JWT;
 
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.io.Encoders;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.security.Key;
+import java.security.KeyFactory;
 import java.security.KeyPair;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Map;
 
 @Service
 public class JwtService {
@@ -37,9 +44,27 @@ public class JwtService {
             RSA_PublicKey = Encoders.BASE64.encode(pair.getPublic().getEncoded());
         }
     }
-
     public String getRSA_PublicKey() {
         System.out.println(RSA_PublicKey);
         return RSA_PublicKey;
+    }
+    private String buildRefreshToken(UserDetails details, Map<String,Object> claims){
+        //Signed with HMAC key
+        return null;
+    }
+    private String buildAccessToken(UserDetails details, Map<String,Object> claims){
+        //sings with RSA
+        return null;
+    }
+    private Key getHmacKey(){
+        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(HMAC_Key));
+    }
+    private Key getRsaSignKey(){
+        try {
+            return KeyFactory.getInstance("RSA").generatePrivate(
+                new PKCS8EncodedKeySpec(Decoders.BASE64.decode(RSA_PrivateKey)));
+        }catch (Exception e){
+            return null;
+        }
     }
 }

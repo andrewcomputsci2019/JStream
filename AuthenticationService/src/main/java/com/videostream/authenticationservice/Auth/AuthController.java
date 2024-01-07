@@ -13,7 +13,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -28,6 +33,7 @@ public class AuthController {
         this.jwtService = jwtService;
         this.encoder = encoder;
         this.userRepository = userRepository;
+        jwtService.validateKeys();
     }
     @PostMapping({"/login"})
     public ResponseEntity<?> authenticateUserSignOn(@RequestBody AuthenticationRequest request){
@@ -49,15 +55,26 @@ public class AuthController {
         return ResponseEntity.ok(mapper.writer().writeValueAsString(root));
     }
     @PostMapping(value = "/createAccount", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<?> createAccount(@Valid @RequestBody UserValidator validator){
         //should create the account the username does not exist and, b return a jwt RT and AT pair
         if(!userRepository.existsByUserName(validator.getUserName())){
             UserBuilder userBuilder = new UserBuilder();
             userBuilder.setUserName(validator.getUserName()).setPasswordHash(encoder.encode(validator.getPassword()));
             userRepository.save(userBuilder.createUser());
-            return ResponseEntity.ok("Account Created");
+            //todo change this to a json response of the jwt
+            return new ResponseEntity<>("Account Created",HttpStatus.CREATED);
         }
-        return ResponseEntity.badRequest().body("UserName Exists");
+        return ResponseEntity.badRequest().body(Map.of("Creation Error","Username is already in use"));
+    }
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> invalidUserAccount(MethodArgumentNotValidException ex){
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((er)->{
+            String fieldName = ((FieldError)er).getField();
+            String message = er.getDefaultMessage();
+            errors.put(fieldName,message);
+        });
+        return errors;
     }
 }
