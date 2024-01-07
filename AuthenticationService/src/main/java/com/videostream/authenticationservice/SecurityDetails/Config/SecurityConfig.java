@@ -21,8 +21,8 @@ import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 public class SecurityConfig {
     @Bean
     @Profile("dev")
-    public SecurityFilterChain securityFilterChain(HttpSecurity security, HandlerMappingIntrospector introspector) throws Exception{
-        MvcRequestMatcher.Builder mvcMatcherBuilder = new MvcRequestMatcher.Builder(introspector);
+    public SecurityFilterChain securityFilterChain(HttpSecurity security, HandlerMappingIntrospector introspection) throws Exception{
+        MvcRequestMatcher.Builder mvcMatcherBuilder = new MvcRequestMatcher.Builder(introspection);
         security.csrf((AbstractHttpConfigurer::disable));
         security.cors(AbstractHttpConfigurer::disable); //production change to more strict policy
         security.authorizeHttpRequests(authorizationManagerRequestMatcherRegistry -> authorizationManagerRequestMatcherRegistry

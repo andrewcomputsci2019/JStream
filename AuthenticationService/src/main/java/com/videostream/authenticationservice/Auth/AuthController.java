@@ -33,7 +33,6 @@ public class AuthController {
         this.jwtService = jwtService;
         this.encoder = encoder;
         this.userRepository = userRepository;
-        jwtService.validateKeys();
     }
     @PostMapping({"/login"})
     public ResponseEntity<?> authenticateUserSignOn(@RequestBody AuthenticationRequest request){
