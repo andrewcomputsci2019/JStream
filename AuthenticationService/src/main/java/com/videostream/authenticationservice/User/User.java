@@ -32,7 +32,9 @@ public class User implements UserDetails {
         this.accountNonLocked = accountNonLocked;
         this.credentialsNonExpired = credentialsNonExpired;
     }
+    public User() {
 
+    }
 
 
     @Override
