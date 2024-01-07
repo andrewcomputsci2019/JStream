@@ -32,8 +32,11 @@ public class User implements UserDetails {
         this.accountNonLocked = accountNonLocked;
         this.credentialsNonExpired = credentialsNonExpired;
     }
-    public User() {
+    public User(boolean accountNonExpired, boolean accountNonLocked, boolean credentialsNonExpired) {
 
+        this.accountNonExpired = accountNonExpired;
+        this.accountNonLocked = accountNonLocked;
+        this.credentialsNonExpired = credentialsNonExpired;
     }
 
 
