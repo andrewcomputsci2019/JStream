@@ -12,6 +12,9 @@ import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -48,13 +51,23 @@ public class JwtService {
         System.out.println(RSA_PublicKey);
         return RSA_PublicKey;
     }
-    private String buildRefreshToken(UserDetails details, Map<String,Object> claims){
+    private String buildRefreshToken(UserDetails details){
         //Signed with HMAC key
-        return null;
+        return Jwts.builder()
+                .claims(new HashMap<>())
+                .subject(details.getUsername())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(java.sql.Timestamp.valueOf(LocalDateTime.now().plusHours(2)))
+                .signWith(getHmacKey()).compact();
     }
     private String buildAccessToken(UserDetails details, Map<String,Object> claims){
         //sings with RSA
-        return null;
+        return Jwts.builder().claims(claims)
+                .subject(details.getUsername())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(java.sql.Timestamp.valueOf(LocalDateTime.now().plusMinutes(30)))
+                .signWith(getRsaSignKey())
+                .compact();
     }
     private Key getHmacKey(){
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(HMAC_Key));
