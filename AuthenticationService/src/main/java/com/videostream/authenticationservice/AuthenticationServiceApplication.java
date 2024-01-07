@@ -12,7 +12,7 @@ import java.io.IOException;
 @EnableJpaRepositories
 public class AuthenticationServiceApplication {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         SpringApplication.run(AuthenticationServiceApplication.class, args);
     }
 
