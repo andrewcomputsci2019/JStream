@@ -17,16 +17,23 @@ public class User implements UserDetails {
     boolean enable;
     @Enumerated(EnumType.STRING)
     UserRoles roles;
+    private final boolean accountNonExpired;
+    private final boolean accountNonLocked;
+    private final boolean credentialsNonExpired;
 
-    public User() {
-    }
-    public User(long id, String userName, String passwordHash, boolean enable, UserRoles roles) {
+
+    public User(long id, String userName, String passwordHash, boolean enable, UserRoles roles, boolean accountNonExpired, boolean accountNonLocked, boolean credentialsNonExpired) {
         this.id = id;
         this.userName = userName;
         this.passwordHash = passwordHash;
         this.enable = enable;
         this.roles = roles;
+        this.accountNonExpired = accountNonExpired;
+        this.accountNonLocked = accountNonLocked;
+        this.credentialsNonExpired = credentialsNonExpired;
     }
+
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -62,4 +69,5 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return enable;
     }
+
 }
