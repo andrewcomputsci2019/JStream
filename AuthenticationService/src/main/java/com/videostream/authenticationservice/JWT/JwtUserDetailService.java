@@ -35,8 +35,7 @@ public class JwtUserDetailService implements UserDetailsService {
             Map<String, String> map = jwtService.extractClaimsFromAuthToken(token);
             String user = map.get("sub");
             UserRoles roles = UserRoles.valueOf(map.get("Role"));
-            UserDetails details = new JwtUser(user,roles);
-            return details;
+            return new JwtUser(user,roles);
         }
         throw new UsernameNotFoundException("Failed to get UserInformation from token");
     }
