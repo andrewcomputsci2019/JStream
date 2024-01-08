@@ -33,6 +33,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         String token = jwtService.resolveToken(request.getHeader(org.springframework.http.HttpHeaders.AUTHORIZATION));
         if(token != null && jwtService.validAuthToken(token)){
             logger.debug("Token Valid");
+            //load jwt into user detail class
             UserDetails details = userDetailsService.loadUserByUsername(token);
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetailsService,null, details.getAuthorities());
             authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

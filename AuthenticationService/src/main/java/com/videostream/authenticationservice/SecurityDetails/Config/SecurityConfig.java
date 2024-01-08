@@ -28,7 +28,12 @@ public class SecurityConfig {
     @Bean
     @Profile("dev")
     @Autowired
-    public SecurityFilterChain securityFilterChain(HttpSecurity security, HandlerMappingIntrospector introspection, AuthenticationProvider provider, JwtTokenFilter filter) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity security,
+            HandlerMappingIntrospector introspection,
+            AuthenticationProvider provider,
+            JwtTokenFilter filter
+    ) throws Exception {
         MvcRequestMatcher.Builder mvcMatcherBuilder = new MvcRequestMatcher.Builder(introspection);
         security.csrf((AbstractHttpConfigurer::disable));
         security.cors(AbstractHttpConfigurer::disable); //production change to more strict policy

@@ -11,10 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.security.Key;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.PublicKey;
+import java.security.*;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.LocalDateTime;
@@ -39,13 +36,17 @@ public class JwtService {
     @Value("${jwt.rsa.PublicKey}")
     private String RSA_PublicKey;
 
-    //todo load strings into actual key pairs --> https://github.com/jwtk/jjwt/issues/131#issuecomment-1003065051
-
+    private PrivateKey rsaPrivateKey;
+    private PublicKey rsaPublicKey;
+    private Key hmacSignKey;
 
     public JwtService() {
 
     }
 
+    /**
+     * in the case where keys are not defined from the property file, they can be loaded on runtime
+     */
     public void validateKeys() {
         if (HMAC_Key == null || RSA_PrivateKey == null || RSA_PublicKey == null) {
             System.out.println("Generating Keys");
@@ -56,6 +57,12 @@ public class JwtService {
         }
     }
 
+    /**
+     * Function that builds singed jwt refresh tokens, valid for 2 hours
+     *
+     * @param details the user in question
+     * @return a singed refresh jwt for the user in question
+     */
     public String buildRefreshToken(UserDetails details) {
         //Signed with HMAC key
         return Jwts.builder()
@@ -65,6 +72,14 @@ public class JwtService {
                 .expiration(java.sql.Timestamp.valueOf(LocalDateTime.now().plusHours(2)))
                 .signWith(getHmacKey()).compact();
     }
+
+    /**
+     * Function that builds a singed jwt auth access token, valid for 30 minutes
+     *
+     * @param details user in question
+     * @param claims  these are claims for role authentication as well as other information
+     * @return JWT access auth token
+     */
     public String buildAccessToken(UserDetails details, Map<String, Object> claims) {
         //sings with RSA
         return Jwts.builder().claims(claims)
@@ -75,25 +90,43 @@ public class JwtService {
                 .compact();
     }
 
+    /**
+     * Returns Decoded Hmac key, needs to be kept secrete
+     * @return Decoded Hmac key
+     */
     private Key getHmacKey() {
-        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(HMAC_Key));
+        if(hmacSignKey != null){
+            return hmacSignKey;
+        }
+        hmacSignKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(HMAC_Key));
+        return hmacSignKey;
     }
 
     private PublicKey getRSAPublicKey() {
+        if (rsaPublicKey != null) {
+            return rsaPublicKey;
+        }
         try {
-            return KeyFactory.getInstance("RSA")
-                    .generatePublic(
+            rsaPublicKey =
+                    KeyFactory.getInstance("RSA").generatePublic(
                             new X509EncodedKeySpec(Decoders.BASE64.decode(RSA_PublicKey))
                     );
+            return rsaPublicKey;
         } catch (Exception e) {
             return null;
         }
     }
 
     private Key getRsaSignKey() {
+        if (rsaPrivateKey != null) {
+            return rsaPrivateKey;
+        }
         try {
-            return KeyFactory.getInstance("RSA").generatePrivate(
-                    new PKCS8EncodedKeySpec(Decoders.BASE64.decode(RSA_PrivateKey)));
+            rsaPrivateKey =
+                    KeyFactory.getInstance("RSA").generatePrivate(
+                            new PKCS8EncodedKeySpec(Decoders.BASE64.decode(RSA_PrivateKey))
+                    );
+            return rsaPrivateKey;
         } catch (Exception e) {
             return null;
         }
@@ -103,7 +136,8 @@ public class JwtService {
         if (StringUtils.hasText(token) && token.startsWith("Bearer ")) {
             return token.substring(7);
         }
-        log.atWarn().log(StringUtils.hasText(token) ? "Token did not start with Bearer: {}" : "Token was empty: {}", token);
+        log.atWarn()
+                .log(StringUtils.hasText(token) ? "Token did not start with Bearer: {}" : "Token was empty: {}", token);
         return null;
     }
 
@@ -118,22 +152,40 @@ public class JwtService {
         }
         return true;
     }
-    public Map<String, String> extractClaimsFromAuthToken(String token){
+
+    /**
+     * Returns all claims found in jwt payload, if token signature is valid
+     *
+     * @param token the token in question
+     * @return claims found within JWT token
+     */
+    public Map<String, String> extractClaimsFromAuthToken(String token) {
         HashMap<String, String> map = new HashMap<>();
         Jwts.parser().verifyWith(getRSAPublicKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
-                .forEach((k,v)-> map.put(k,v.toString()));
+                .forEach((k, v) -> map.put(k, v.toString()));
         log.info("Token Values: {}", map);
         return map;
     }
 
+    /**
+     * extracts the username found within the token iff token signature is valid
+     *
+     * @param token JWT token in question
+     * @return username if token is valid
+     */
     public String getUserNameAuthToken(String token) {
-        return Jwts.parser().verifyWith(getRSAPublicKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+        try {
+            return Jwts.parser().verifyWith(getRSAPublicKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getSubject();
+        } catch (Exception e) {
+            log.atInfo().log("Token could not be parsed, cause: {} : message: {}", e.getCause(), e.getMessage());
+            return null;
+        }
     }
 }
