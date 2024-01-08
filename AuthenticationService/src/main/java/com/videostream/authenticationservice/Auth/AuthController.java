@@ -21,16 +21,15 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
-    private JwtService jwtService;
-    private PasswordEncoder encoder;
+    private final JwtService jwtService;
+    private final PasswordEncoder encoder;
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
     @Autowired
     public AuthController(JwtService jwtService, PasswordEncoder encoder, UserRepository userRepository){
         this.jwtService = jwtService;

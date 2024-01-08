@@ -15,7 +15,7 @@ import java.util.Map;
 public class JwtUserDetailService implements UserDetailsService {
 
 
-    private JwtService jwtService;
+    private final JwtService jwtService;
 
     @Autowired
     public JwtUserDetailService(JwtService jwtService) {

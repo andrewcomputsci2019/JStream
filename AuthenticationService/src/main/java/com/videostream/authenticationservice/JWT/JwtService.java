@@ -1,10 +1,10 @@
 package com.videostream.authenticationservice.JWT;
 
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -35,6 +35,7 @@ public class JwtService {
      */
     @Value("${jwt.rsa.PrivateKey}")
     private String RSA_PrivateKey;
+    @Getter
     @Value("${jwt.rsa.PublicKey}")
     private String RSA_PublicKey;
 
@@ -53,10 +54,6 @@ public class JwtService {
             RSA_PrivateKey = Encoders.BASE64.encode(pair.getPrivate().getEncoded());
             RSA_PublicKey = Encoders.BASE64.encode(pair.getPublic().getEncoded());
         }
-    }
-
-    public String getRSA_PublicKey() {
-        return RSA_PublicKey;
     }
 
     public String buildRefreshToken(UserDetails details) {
