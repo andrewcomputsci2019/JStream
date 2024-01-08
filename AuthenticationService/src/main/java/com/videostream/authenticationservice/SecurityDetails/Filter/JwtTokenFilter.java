@@ -30,14 +30,15 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        //grabs the authorization header from the request
         String token = jwtService.resolveToken(request.getHeader(org.springframework.http.HttpHeaders.AUTHORIZATION));
         if(token != null && jwtService.validAuthToken(token)){
-            logger.debug("Token Valid");
             //load jwt into user detail class
             UserDetails details = userDetailsService.loadUserByUsername(token);
-            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetailsService,null, details.getAuthorities());
+            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(details,null, details.getAuthorities());
             authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            logger.info("Valid Auth Token Parsed and loaded into userAccount");
         }
         filterChain.doFilter(request,response);
     }
