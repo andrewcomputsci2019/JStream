@@ -38,8 +38,9 @@ public class SecurityConfig {
         security.csrf((AbstractHttpConfigurer::disable));
         security.cors(AbstractHttpConfigurer::disable); //production change to more strict policy
         security.authorizeHttpRequests(authorizationManagerRequestMatcherRegistry -> authorizationManagerRequestMatcherRegistry
-                .requestMatchers(mvcMatcherBuilder.pattern("/auth/**")).permitAll()
-                .requestMatchers(PathRequest.toH2Console()).permitAll());
+                .requestMatchers(mvcMatcherBuilder.pattern("/auth/*")).permitAll()
+                .requestMatchers(PathRequest.toH2Console()).permitAll()
+                .requestMatchers(mvcMatcherBuilder.pattern("/auth/users/")).authenticated());
         security.sessionManagement(httpSecuritySessionManagementConfigurer ->
                 httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         security.headers(httpSecurityHeadersConfigurer ->

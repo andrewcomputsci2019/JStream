@@ -2,6 +2,7 @@ package com.videostream.authenticationservice.User;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -14,6 +15,7 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     long id;
     String userName;
+    @Setter
     String passwordHash;
     boolean enable;
     @Getter
