@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.videostream.authenticationservice.Auth.Validation.UserValidator;
 import com.videostream.authenticationservice.JWT.JwtService;
+import com.videostream.authenticationservice.JWT.JwtTokenPair;
 import com.videostream.authenticationservice.SecurityDetails.UserRepository;
+import com.videostream.authenticationservice.User.User;
 import com.videostream.authenticationservice.User.UserBuilder;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/auth")
@@ -40,7 +43,7 @@ public class AuthController {
         return null;
     }
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshAuthentication(@RequestHeader("Authorization") String token){
+    public ResponseEntity<?> refreshAuthentication(@RequestBody String refreshToken){
         //todo validate token
 
         //todo return new refresh token and access token
@@ -59,9 +62,14 @@ public class AuthController {
         if(!userRepository.existsByUserName(validator.getUserName())){
             UserBuilder userBuilder = new UserBuilder();
             userBuilder.setUserName(validator.getUserName()).setPasswordHash(encoder.encode(validator.getPassword()));
-            userRepository.save(userBuilder.createUser());
-            //todo change this to a json response of the jwt
-            return new ResponseEntity<>("Account Created",HttpStatus.CREATED);
+            User user = userBuilder.createUser();
+            userRepository.save(user);
+            Map<String, Object> claims = new HashMap<>();
+            claims.put("Role",user.getRoles().name());
+            String accessToken = jwtService.buildAccessToken(user,claims);
+            String refreshToken = jwtService.buildRefreshToken(user);
+            jwtService.extractClaimsFromAuthToken(accessToken);
+            return new ResponseEntity<>(new JwtTokenPair(accessToken,refreshToken),HttpStatus.CREATED);
         }
         return ResponseEntity.badRequest().body(Map.of("Creation Error","Username is already in use"));
     }

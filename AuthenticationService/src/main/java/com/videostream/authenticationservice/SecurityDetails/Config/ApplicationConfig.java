@@ -1,5 +1,7 @@
 package com.videostream.authenticationservice.SecurityDetails.Config;
 
+import com.videostream.authenticationservice.JWT.JwtService;
+import com.videostream.authenticationservice.JWT.JwtUserDetailService;
 import com.videostream.authenticationservice.SecurityDetails.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -43,4 +45,9 @@ public class ApplicationConfig {
         return new Argon2PasswordEncoder(16,32,1,19923,2);
     }
 
+    @Bean
+    @Autowired
+    public UserDetailsService jwtUserDetailsService(JwtService jwtService){
+        return new JwtUserDetailService(jwtService);
+    }
 }

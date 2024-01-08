@@ -1,15 +1,22 @@
 package com.videostream.authenticationservice.SecurityDetails.Config;
 
+import com.videostream.authenticationservice.SecurityDetails.Filter.JwtTokenFilter;
+import jakarta.servlet.http.HttpServletResponse;
+import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
 import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
@@ -19,9 +26,11 @@ import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 @EnableWebSecurity
 @Configuration
 public class SecurityConfig {
+
     @Bean
     @Profile("dev")
-    public SecurityFilterChain securityFilterChain(HttpSecurity security, HandlerMappingIntrospector introspection) throws Exception{
+    @Autowired
+    public SecurityFilterChain securityFilterChain(HttpSecurity security, HandlerMappingIntrospector introspection, AuthenticationProvider provider, JwtTokenFilter filter) throws Exception {
         MvcRequestMatcher.Builder mvcMatcherBuilder = new MvcRequestMatcher.Builder(introspection);
         security.csrf((AbstractHttpConfigurer::disable));
         security.cors(AbstractHttpConfigurer::disable); //production change to more strict policy
@@ -33,6 +42,15 @@ public class SecurityConfig {
         security.headers(httpSecurityHeadersConfigurer ->
                 httpSecurityHeadersConfigurer.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)
         );
+        security.exceptionHandling(
+                httpSecurityExceptionHandlingConfigurer ->
+                        httpSecurityExceptionHandlingConfigurer.authenticationEntryPoint((request, response, authException) ->
+                                response.sendError(
+                                        HttpServletResponse.SC_UNAUTHORIZED,
+                                        authException.getLocalizedMessage()
+                                ))
+        );
+        security.authenticationProvider(provider).addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
         return security.build();
     }
 }

@@ -1,6 +1,7 @@
 package com.videostream.authenticationservice.User;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -15,6 +16,7 @@ public class User implements UserDetails {
     String userName;
     String passwordHash;
     boolean enable;
+    @Getter
     @Enumerated(EnumType.STRING)
     UserRoles roles;
     private final boolean accountNonExpired;
