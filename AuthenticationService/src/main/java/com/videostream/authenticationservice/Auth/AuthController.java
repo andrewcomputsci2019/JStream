@@ -6,14 +6,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.videostream.authenticationservice.Auth.Validation.UserValidator;
 import com.videostream.authenticationservice.JWT.JwtService;
 import com.videostream.authenticationservice.JWT.JwtTokenPair;
+import com.videostream.authenticationservice.JWT.JwtUser;
 import com.videostream.authenticationservice.SecurityDetails.UserRepository;
 import com.videostream.authenticationservice.User.User;
 import com.videostream.authenticationservice.User.UserBuilder;
+import io.jsonwebtoken.Jwts;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -44,9 +48,18 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshAuthentication(@RequestBody String refreshToken){
         //todo validate token
-
+        if (jwtService.validRefreshToken(refreshToken)) { // refresh token is valid
+            String username = jwtService.getUserNameRefreshToken(refreshToken); // get username from payload (?)
+            User currentAccount = userRepository.findByUserName(username).orElseThrow(()-> new UsernameNotFoundException("Account does not exist"));
+            Map<String, Object> claims = new HashMap<>();
+            claims.put("Role", currentAccount.getRoles().name());
+            String newAccessToken = jwtService.buildAccessToken(currentAccount, claims);
+            String newRefreshToken = jwtService.buildRefreshToken(currentAccount);
+            jwtService.extractClaimsFromAuthToken(newAccessToken); // is this line necessary?
+            return new ResponseEntity<>(new JwtTokenPair(newAccessToken, newRefreshToken), HttpStatus.CREATED);
+        }
         //todo return new refresh token and access token
-        return null;
+        return ResponseEntity.badRequest().body(Map.of("New auth and refresh token generation failed","Refresh token invalid"));
     }
     @GetMapping(value = "/pubkey",produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getPublicKey() throws JsonProcessingException {
@@ -56,7 +69,7 @@ public class AuthController {
         return ResponseEntity.ok(mapper.writer().writeValueAsString(root));
     }
     @PostMapping(value = "/createAccount", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> createAccount(@Valid @RequestBody UserValidator validator){
+    public ResponseEntity<?>createAccount(@Valid @RequestBody UserValidator validator){
         //should create the account the username does not exist and, b return a jwt RT and AT pair
         if(!userRepository.existsByUserName(validator.getUserName())){
             UserBuilder userBuilder = new UserBuilder();

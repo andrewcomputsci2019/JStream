@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import javax.crypto.SecretKey;
 import java.security.*;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
@@ -94,12 +95,12 @@ public class JwtService {
      * Returns Decoded Hmac key, needs to be kept secrete
      * @return Decoded Hmac key
      */
-    private Key getHmacKey() {
+    private SecretKey getHmacKey() {
         if(hmacSignKey != null){
-            return hmacSignKey;
+            return (SecretKey) hmacSignKey;
         }
         hmacSignKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(HMAC_Key));
-        return hmacSignKey;
+        return (SecretKey) hmacSignKey;
     }
 
     private PublicKey getRSAPublicKey() {
@@ -141,10 +142,34 @@ public class JwtService {
         return null;
     }
 
+    /**
+     * Boolean to verify auth token using RSA public key
+     *
+     * @param token of user in question
+     * @return boolean
+     */
     public boolean validAuthToken(String token) {
         //validate token
         try {
             Jwts.parser().verifyWith(getRSAPublicKey()).build()
+                    .parseSignedClaims(token);
+        } catch (Exception e) {
+            log.atWarn().log("JWT Failed to parse: {} : {}", e.getCause(), e.getMessage());
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Boolean to verify auth token using RSA public key
+     *
+     * @param token of user in question
+     * @return boolean
+     */
+    public boolean validRefreshToken(String token) {
+        //validate token
+        try {
+            Jwts.parser().verifyWith(getHmacKey()).build()
                     .parseSignedClaims(token);
         } catch (Exception e) {
             log.atWarn().log("JWT Failed to parse: {} : {}", e.getCause(), e.getMessage());
@@ -179,6 +204,24 @@ public class JwtService {
     public String getUserNameAuthToken(String token) {
         try {
             return Jwts.parser().verifyWith(getRSAPublicKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getSubject();
+        } catch (Exception e) {
+            log.atInfo().log("Token could not be parsed, cause: {} : message: {}", e.getCause(), e.getMessage());
+            return null;
+        }
+    }
+    /**
+     * extracts the username found within the token iff token signature is valid
+     *
+     * @param token JWT token in question
+     * @return username if token is valid
+     */
+    public String getUserNameRefreshToken(String token) {
+        try {
+            return Jwts.parser().verifyWith(getHmacKey())
                     .build()
                     .parseSignedClaims(token)
                     .getPayload()
