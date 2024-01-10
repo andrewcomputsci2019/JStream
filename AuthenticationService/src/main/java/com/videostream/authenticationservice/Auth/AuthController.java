@@ -46,8 +46,9 @@ public class AuthController {
         return null;
     }
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshAuthentication(@RequestBody String refreshToken){
+    public ResponseEntity<?> refreshAuthentication(@RequestBody Map<String, String> tokenMap){
         //todo validate token
+        String refreshToken = tokenMap.get("refreshToken");
         if (jwtService.validRefreshToken(refreshToken)) { // refresh token is valid
             String username = jwtService.getUserNameRefreshToken(refreshToken); // get username from payload (?)
             User currentAccount = userRepository.findByUserName(username).orElseThrow(()-> new UsernameNotFoundException("Account does not exist"));
