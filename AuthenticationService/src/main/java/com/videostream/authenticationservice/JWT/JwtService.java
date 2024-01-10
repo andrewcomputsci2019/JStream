@@ -39,7 +39,7 @@ public class JwtService {
 
     private PrivateKey rsaPrivateKey;
     private PublicKey rsaPublicKey;
-    private Key hmacSignKey;
+    private SecretKey hmacSignKey;
 
     public JwtService() {
 
@@ -97,10 +97,10 @@ public class JwtService {
      */
     private SecretKey getHmacKey() {
         if(hmacSignKey != null){
-            return (SecretKey) hmacSignKey;
+            return hmacSignKey;
         }
         hmacSignKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(HMAC_Key));
-        return (SecretKey) hmacSignKey;
+        return hmacSignKey;
     }
 
     private PublicKey getRSAPublicKey() {
