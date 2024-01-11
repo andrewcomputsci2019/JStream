@@ -2,7 +2,6 @@ package com.videostream.authenticationservice.SecurityDetails.Config;
 
 import com.videostream.authenticationservice.SecurityDetails.Filter.JwtAuthenticationEntryPoint;
 import com.videostream.authenticationservice.SecurityDetails.Filter.JwtTokenFilter;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
