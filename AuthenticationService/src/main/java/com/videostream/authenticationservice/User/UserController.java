@@ -2,6 +2,7 @@ package com.videostream.authenticationservice.User;
 
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -14,6 +15,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/auth/users/")
+@Slf4j
 @AllArgsConstructor
 public class UserController {
     private final UserServices userServices;
@@ -21,7 +23,7 @@ public class UserController {
     @PatchMapping
     public ResponseEntity<?> changePassword(@RequestBody @Valid ChangePasswordRequest request, Principal principal){
         userServices.changePassword(request,principal);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(Map.of("Password","Changed"));
     }
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
