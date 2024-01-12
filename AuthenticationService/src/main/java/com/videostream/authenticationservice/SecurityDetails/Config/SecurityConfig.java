@@ -1,7 +1,7 @@
 package com.videostream.authenticationservice.SecurityDetails.Config;
 
+import com.videostream.authenticationservice.SecurityDetails.Filter.JwtAuthenticationEntryPoint;
 import com.videostream.authenticationservice.SecurityDetails.Filter.JwtTokenFilter;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -32,11 +32,12 @@ public class SecurityConfig {
             HttpSecurity security,
             HandlerMappingIntrospector introspection,
             AuthenticationProvider provider,
-            JwtTokenFilter filter
+            JwtTokenFilter filter,
+            JwtAuthenticationEntryPoint entryPoint
     ) throws Exception {
         MvcRequestMatcher.Builder mvcMatcherBuilder = new MvcRequestMatcher.Builder(introspection);
         security.csrf((AbstractHttpConfigurer::disable));
-        security.cors(AbstractHttpConfigurer::disable); //production change to more strict policy
+        security.cors(AbstractHttpConfigurer::disable); //production change to stricter policy
         security.authorizeHttpRequests(authorizationManagerRequestMatcherRegistry -> authorizationManagerRequestMatcherRegistry
                 .requestMatchers(mvcMatcherBuilder.pattern("/auth/*")).permitAll()
                 .requestMatchers(PathRequest.toH2Console()).permitAll()
@@ -48,12 +49,7 @@ public class SecurityConfig {
         );
         security.exceptionHandling(
                 httpSecurityExceptionHandlingConfigurer ->
-                        httpSecurityExceptionHandlingConfigurer.authenticationEntryPoint((request, response, authException) ->
-                                response.sendError(
-                                        HttpServletResponse.SC_UNAUTHORIZED,
-                                        authException.getLocalizedMessage()
-                                ))
-        );
+                        httpSecurityExceptionHandlingConfigurer.authenticationEntryPoint(entryPoint));
         security.authenticationProvider(provider).addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
         return security.build();
     }
