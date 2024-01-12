@@ -3,6 +3,7 @@ package com.videostream.authenticationservice;
 import com.videostream.authenticationservice.Auth.AuthenticationRequest;
 import com.videostream.authenticationservice.JWT.JwtService;
 import com.videostream.authenticationservice.JWT.JwtTokenPair;
+import com.videostream.authenticationservice.User.ChangePasswordRequest;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -11,9 +12,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -81,6 +85,15 @@ class AuthenticationServiceApplicationTests {
         JwtTokenPair pair = entity.getBody();
         assertThat(validateTokens(pair.accessToken(),pair.refreshToken())).isTrue();
         accessToken = pair.accessToken();
+    }
+    @Test
+    @Order(5)
+    void chargePasswordTest(){
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.AUTHORIZATION,"Bearer " + accessToken);
+        HttpEntity<ChangePasswordRequest> requestHttpEntity = new HttpEntity<>(new ChangePasswordRequest(OLD_PASSWORD, NEW_PASSWORD), headers);
+        HashMap<String, ?> map = (HashMap<String,?>) restTemplate.patchForObject(SERVER_PREFIX+port+"/auth/users/",requestHttpEntity, HashMap.class);
+        assertThat(map).isNotNull();
     }
 
 
