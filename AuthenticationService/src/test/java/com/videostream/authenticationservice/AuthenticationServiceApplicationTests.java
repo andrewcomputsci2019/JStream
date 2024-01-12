@@ -90,7 +90,7 @@ class AuthenticationServiceApplicationTests {
     @Order(5)
     void chargePasswordTest(){
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.AUTHORIZATION,"Bearer " + accessToken);
+        headers.add(HttpHeaders.AUTHORIZATION,TOKEN_PREFIX + accessToken);
         HttpEntity<ChangePasswordRequest> requestHttpEntity = new HttpEntity<>(new ChangePasswordRequest(OLD_PASSWORD, NEW_PASSWORD), headers);
         HashMap<String, ?> map = (HashMap<String,?>) restTemplate.patchForObject(SERVER_PREFIX+port+"/auth/users/",requestHttpEntity, HashMap.class);
         assertThat(map).isNotNull();
